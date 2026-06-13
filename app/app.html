@@ -1,0 +1,163 @@
+<nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-2">
+      <span class="text-2xl font-bold text-blue-600 tracking-tight">ShareFlow</span>
+      <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded">P2P</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <button (click)="showItemModal.set(true)" class="text-sm font-medium text-gray-600 hover:text-gray-900">
+        List Your Gear
+      </button>
+      <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition">
+        Log In
+      </button>
+    </div>
+  </div>
+</nav>
+
+<header class="bg-white border-b border-gray-200 py-12 px-4 text-center">
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 mb-4">
+      Rent anything from your neighbors.
+    </h1>
+    <p class="text-gray-500 mb-6">
+      Save money, reduce waste, and get access to the tools, gear, and tech you need.
+    </p>
+    
+    <div class="relative max-w-lg mx-auto shadow-sm rounded-xl">
+      <input
+        type="text"
+        placeholder="Search for cameras, tents, drills..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        class="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+      />
+      <div class="absolute right-3 top-3.5 text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <h2 class="text-xl font-bold mb-6 text-gray-800">Available Near You</h2>
+  
+  <div [ngClass]="errorMessage() || isLoading() || filteredItems().length === 0 ? 'text-center py-12 text-gray-400 w-full' : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'">
+    
+    @if (isLoading()) {
+      <div class="col-span-full text-center py-12 text-gray-400 animate-pulse">Loading items...</div>
+    } @else if (errorMessage()) {
+      <div class="col-span-full text-center py-12 text-red-500">{{ errorMessage() }}</div>
+    } @else {
+      @for (item of filteredItems(); track item.id) {
+        <div (click)="openBookingFlow(item)" class="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-md transition duration-200 group cursor-pointer">
+          <div class="h-48 w-full bg-gray-200 overflow-hidden relative">
+            <img [src]="item.image_url" [alt]="item.title" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" />
+            <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-full shadow-sm">
+              {{ item.category }}
+            </span>
+          </div>
+          <div class="p-4">
+            <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+              <span>{{ item.location }}</span>
+              <span class="flex items-center gap-1 text-amber-500 font-medium">★ {{ item.rating || '5.0' }}</span>
+            </div>
+            <h3 class="font-semibold text-gray-900 mb-3 truncate group-hover:text-blue-600 transition">
+              {{ item.title }}
+            </h3>
+            <div class="border-t border-gray-100 pt-3 flex items-center justify-between">
+              <div>
+                <span class="text-lg font-bold text-gray-900">${{ item.price_per_day }}</span>
+                <span class="text-xs text-gray-500"> / day</span>
+              </div>
+              <button class="bg-blue-50 border border-blue-100 text-blue-600 group-hover:bg-blue-600 group-hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                Rent Now
+              </button>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <div class="col-span-full text-center py-12 text-gray-500">No items match your search.</div>
+      }
+    }
+  </div>
+</main>
+
+@if (showItemModal()) {
+  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-bold text-gray-900">List an Item for Rent</h3>
+        <button (click)="showItemModal.set(false)" class="text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      </div>
+      <form (ngSubmit)="onAddItemSubmit()" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Item Title</label>
+          <input type="text" [(ngModel)]="newItem.title" name="title" required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-blue-500"/>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Category</label>
+          <select [(ngModel)]="newItem.category" name="category" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-blue-500">
+            <option value="Electronics">Electronics</option>
+            <option value="Outdoors">Outdoors</option>
+            <option value="Tools">Tools</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Price per Day ($)</label>
+            <input type="number" [(ngModel)]="newItem.price_per_day" name="price" required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-blue-500"/>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Location</label>
+            <input type="text" [(ngModel)]="newItem.location" name="location" placeholder="e.g. Austin, TX" required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-blue-500"/>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Image URL</label>
+          <input type="url" [(ngModel)]="newItem.image_url" name="imageUrl" placeholder="https://..." required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-blue-500"/>
+        </div>
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2.5 rounded-lg font-semibold text-sm transition mt-2">
+          Submit Listing
+        </button>
+      </form>
+    </div>
+  </div>
+}
+
+@if (showBookingModal() && selectedItem()) {
+  <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl p-6 max-w-sm w-full shadow-xl relative">
+      <button (click)="showBookingModal.set(false)" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl font-bold">&times;</button>
+      
+      <div class="text-center mb-4">
+        <span class="bg-blue-50 text-blue-600 text-xs font-bold px-2.5 py-1 rounded-full">{{ selectedItem()?.category }}</span>
+        <h3 class="text-xl font-bold text-gray-900 mt-2 truncate">{{ selectedItem()?.title }}</h3>
+        <p class="text-sm text-gray-500 mt-1">Daily Fee: <span class="font-bold text-gray-900">${{ selectedItem()?.price_per_day }}</span> / day</p>
+      </div>
+
+      <form (ngSubmit)="onBookingSubmit()" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-600 mb-1">Your Name</label>
+          <input type="text" [(ngModel)]="bookingData.renter_name" name="renterName" required placeholder="Eric" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-blue-500"/>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
+            <input type="date" [min]="todayDate" [(ngModel)]="bookingData.start_date" name="startDate" required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-blue-500"/>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 mb-1">End Date</label>
+            <input type="date" [min]="todayDate" [(ngModel)]="bookingData.end_date" name="endDate" required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none focus:border-blue-500"/>
+          </div>
+        </div>
+        
+        <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-lg font-semibold text-sm transition mt-2">
+          Confirm Rental Request
+        </button>
+      </form>
+    </div>
+  </div>
+}
